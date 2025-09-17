@@ -14,7 +14,7 @@ GRID_SIZE = 20
 CELL_SIZE = 20  # Size of each cell in pixels for rendering
 SNAKE_COLOR = "green"
 FOOD_COLOR = "red"
-GAME_SPEED = 150  # Milliseconds
+GAME_SPEED = 50  # Milliseconds
 
 def play():
     # 1. Initialize Agent and Game

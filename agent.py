@@ -15,7 +15,7 @@ class Agent:
         self.n_games = 0
         self.epsilon = 0 # Exploration rate
         self.gamma = 0.95 # Discount rate
-        self.model = Linear_QNet(11, 256, 3)
+        self.model = Linear_QNet(15, 512, 3)
         self.memory = deque(maxlen=MAX_MEMORY)
         self.trainer = QTrainer(self.model, lr=0.001, gamma=self.gamma)
 
@@ -30,11 +30,28 @@ class Agent:
         
         # Define points around the head
         point_l = (head[0], head[1] - 1)
+        point_l2 = (head[0], head[1] - 2)
         point_r = (head[0], head[1] + 1)
+        point_r2 = (head[0], head[1] + 2)
         point_u = (head[0] - 1, head[1])
+        point_u2 = (head[0] - 2, head[1])
         point_d = (head[0] + 1, head[1])
+        point_d2 = (head[0] + 2, head[1])
+        point_ul = (head[0] - 1, head[1] - 1)
+        point_ur = (head[0] - 1, head[1] + 1)
+        point_dl = (head[0] + 1, head[1] - 1)
+        point_dr = (head[0] + 1, head[1] + 1)
 
-        points = [point_u, point_r, point_d, point_l]  # clockwise: Up, Right, Down, Left
+        points = [
+            point_u, point_u2,
+            point_ur,
+            point_r, point_r2,
+            point_dr,
+            point_d, point_d2,
+            point_dl,
+            point_l, point_l2,
+            point_ul
+        ]  # clockwise: Up, Right, Down, Left
 
         # Get current direction as booleans
         dir_l = game.direction == (0, -1)
@@ -47,18 +64,26 @@ class Agent:
         # Rotate points to match current direction
         for i in range(4):
             if directions[i]:
-                points = points[i:] + points[:i]
+                points = points[(i*3):] + points[:(i*3)]
                 break
 
+        def is_danger(ind):
+            return points[ind] in game.snake or not (0 <= points[ind][0] < game.GRID_SIZE and 0 <= points[ind][1] < game.GRID_SIZE)
+
         state = [
-            # Danger straight
-            points[0] in game.snake or not (0 <= points[0][0] < game.GRID_SIZE and 0 <= points[0][1] < game.GRID_SIZE),
+            # Weighted danger straight
+            is_danger(0) + 0.5*is_danger(1),
+
+            0.5 * is_danger(2),
 
             # Danger right
-            points[1] in game.snake or not (0 <= points[1][0] < game.GRID_SIZE and 0 <= points[1][1] < game.GRID_SIZE),
+            is_danger(3) + 0.5*is_danger(4),
+            0.5 * is_danger(5),
 
             # Danger left
-            points[3] in game.snake or not (0 <= points[3][0] < game.GRID_SIZE and 0 <= points[3][1] < game.GRID_SIZE),
+            0.5 * is_danger(8),
+            is_danger(9)+ 0.5*(is_danger(10)),
+            0.5 * is_danger(11),
             
             # Move direction
             dir_l,
